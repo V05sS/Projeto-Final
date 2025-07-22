@@ -1,9 +1,9 @@
 <?php
 
-// Criar uma conexão à base dados
+// Criar uma conexão à base dados.
 $con = mysqli_connect('127.0.0.1', 'root', '', 'app_receitas');
 
-// Verificar se a conexão foi concluida
+// Verificar se a conexão foi concluída
 if ($con) {
     echo "Conexão com a base de dados concluída!\n";
 } else {
@@ -12,4 +12,7 @@ if ($con) {
 
 // Fechar conexão.
 mysqli_close($con);
+
+// Base de dados funcionando corretamente.
+
 ?>
