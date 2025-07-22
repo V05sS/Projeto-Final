@@ -13,6 +13,8 @@ if ($con) {
 // Fechar conexão.
 mysqli_close($con);
 
-// Base de dados funcionando corretamente.
+// Fase 2: base de dados funcionando corretamente.
+
+// Fase 3: dados inseridos na base de dados.
 
 ?>
