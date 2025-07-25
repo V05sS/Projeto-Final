@@ -14,7 +14,9 @@ if ($con) {
 
 // Fase 3: Criação da base de dados e exportação de dados de teste.
 
-// Fase 4: Operações CRUD básicas para receitas em app.php.
+// Fase 4: Operações CRUD básicas para receitas em app.php (pendente de avaliação do Guilherme).
+
+// Fase 5: Gestão de categorias e associação receita_categoria (aguardando feedback do Guilherme para prosseguir a fase 5).
 
 $fim = false;
 
