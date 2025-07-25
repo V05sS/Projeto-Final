@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 22-Jul-2025 às 20:44
+-- Tempo de geração: 25-Jul-2025 às 16:47
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.2.12
 
@@ -70,16 +70,20 @@ INSERT INTO `ingredientes` (`id`, `nome`) VALUES
 
 CREATE TABLE `receitas` (
   `id` int(11) NOT NULL,
-  `nome` varchar(100) NOT NULL
+  `nome` varchar(100) NOT NULL,
+  `descricao` text DEFAULT NULL,
+  `tempo_preparacao` int(11) DEFAULT NULL,
+  `doses` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Extraindo dados da tabela `receitas`
 --
 
-INSERT INTO `receitas` (`id`, `nome`) VALUES
-(1, 'Doce de Leite'),
-(2, 'Leite Ninho');
+INSERT INTO `receitas` (`id`, `nome`, `descricao`, `tempo_preparacao`, `doses`) VALUES
+(1, 'Doce de leite cremoso', 'Fácil e rápido', 15, 3),
+(2, 'Leite Ninho', NULL, NULL, NULL),
+(7, 'Pão de queijo', 'O gostinho de mineiro', 20, 6);
 
 -- --------------------------------------------------------
 
@@ -98,7 +102,8 @@ CREATE TABLE `receita_categoria` (
 
 INSERT INTO `receita_categoria` (`receita_id`, `categoria_id`) VALUES
 (1, 1),
-(2, 2);
+(2, 2),
+(7, 1);
 
 -- --------------------------------------------------------
 
@@ -121,9 +126,10 @@ INSERT INTO `receita_ingredientes` (`receita_id`, `ingrediente_id`, `quantidade`
 (1, 1, '200', 'g'),
 (1, 2, '500', 'ml'),
 (1, 3, '300', 'g'),
-(2, 1, '150', 'g'),
 (2, 4, '300', 'g'),
-(2, 5, '100', 'g');
+(2, 5, '100', 'g'),
+(7, 1, '2', '2'),
+(7, 2, '150', 'ml');
 
 --
 -- Índices para tabelas despejadas
@@ -181,7 +187,7 @@ ALTER TABLE `ingredientes`
 -- AUTO_INCREMENT de tabela `receitas`
 --
 ALTER TABLE `receitas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Restrições para despejos de tabelas
