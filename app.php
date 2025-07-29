@@ -8,24 +8,32 @@ if ($con) {
     echo "Conexão com a base de dados concluída com sucesso.\n";
 } else {
     echo "Erro na conexão com a base de dados.\n";
+    exit; // Para evitar continuar se não conectar
 }
 
 // Fase 2: Organização do projeto e repositórios GitHub.
 
 // Fase 3: Criação da base de dados e exportação de dados de teste.
 
-// Fase 4: Operações CRUD básicas para receitas em app.php (pendente de avaliação do Guilherme).
+// Fase 4: Operações CRUD básicas para receitas em app.php.
 
-// Fase 5: Gestão de categorias e associação receita_categoria (aguardando feedback do Guilherme para prosseguir a fase 5).
+// Fase 5: Gestão de categorias e associação receita_categoria (pendente de avaliação do Guilherme).
+
+// Fase 6: Gestão de ingredientes e composição das receitas (em processo).
 
 $fim = false;
 
 while (!$fim) {
-    echo "Escolha uma opção:\n";
+    echo "\nEscolha uma opção:\n";
     echo "Criar nova receita -> 1\n";
     echo "Listar todas as receitas -> 2\n";
     echo "Atualizar receita existente -> 3\n";
     echo "Apagar receita -> 4\n";
+    echo "Criar nova categoria -> 5\n";
+    echo "Listar categorias -> 6\n";
+    echo "Associar receita a categoria -> 7\n";
+    echo "Desassociar receita de categoria -> 8\n";
+    echo "Listar receitas por categoria -> 9\n";
     echo "Sair -> 0\n";
 
     $opcao = readline("Escolha uma opção: ");
@@ -42,6 +50,21 @@ while (!$fim) {
             break;
         case '4':
             apagarReceita($con);
+            break;
+        case '5':
+            criarCategoria($con);
+            break;
+        case '6':
+            listarCategorias($con);
+            break;
+        case '7':
+            associarCategoria($con);
+            break;
+        case '8':
+            desassociarCategoria($con);
+            break;
+        case '9':
+            listarReceitasPorCategoria($con);
             break;
         case '0':
             $fim = true;
@@ -185,6 +208,104 @@ function apagarReceita($con) {
     mysqli_query($con, "DELETE FROM receitas WHERE id = $id");
 
     echo "Receita excluída com sucesso.\n";
+}
+
+// Funções adicionais para categorias (fase 5)
+
+function criarCategoria($con) {
+    $nome = readline("Nome da nova categoria: ");
+    $sql = "INSERT INTO categorias (nome) VALUES ('$nome')";
+    if (mysqli_query($con, $sql)) {
+        echo "Categoria criada com sucesso.\n";
+    } else {
+        echo "Erro ao criar categoria: " . mysqli_error($con) . "\n";
+    }
+}
+
+function listarCategorias($con) {
+    $res = mysqli_query($con, "SELECT * FROM categorias");
+    if (mysqli_num_rows($res) === 0) {
+        echo "Nenhuma categoria encontrada.\n";
+        return;
+    }
+    echo "Categorias:\n";
+    while ($cat = mysqli_fetch_assoc($res)) {
+        echo "{$cat['id']} - {$cat['nome']}\n";
+    }
+}
+
+function associarCategoria($con) {
+    listarReceitas($con);
+    $idReceita = (int)readline("ID da receita para associar categoria: ");
+    
+    listarCategorias($con);
+    $idCategoria = (int)readline("ID da categoria para associar: ");
+
+    $check = mysqli_query($con, "SELECT * FROM receita_categoria WHERE receita_id = $idReceita AND categoria_id = $idCategoria");
+    if (mysqli_num_rows($check) > 0) {
+        echo "Essa associação já existe.\n";
+        return;
+    }
+
+    $sql = "INSERT INTO receita_categoria (receita_id, categoria_id) VALUES ($idReceita, $idCategoria)";
+    if (mysqli_query($con, $sql)) {
+        echo "Categoria associada com sucesso.\n";
+    } else {
+        echo "Erro na associação: " . mysqli_error($con) . "\n";
+    }
+}
+
+function desassociarCategoria($con) {
+    listarReceitas($con);
+    $idReceita = (int)readline("ID da receita para desassociar categoria: ");
+
+    $res = mysqli_query($con, "
+        SELECT c.id, c.nome FROM categorias c
+        JOIN receita_categoria rc ON c.id = rc.categoria_id
+        WHERE rc.receita_id = $idReceita
+    ");
+
+    if (mysqli_num_rows($res) === 0) {
+        echo "Nenhuma categoria associada a essa receita.\n";
+        return;
+    }
+
+    echo "Categorias associadas:\n";
+    while ($cat = mysqli_fetch_assoc($res)) {
+        echo "{$cat['id']} - {$cat['nome']}\n";
+    }
+
+    $idCategoria = (int)readline("ID da categoria para desassociar: ");
+    $sql = "DELETE FROM receita_categoria WHERE receita_id = $idReceita AND categoria_id = $idCategoria";
+    if (mysqli_query($con, $sql)) {
+        echo "Categoria desassociada com sucesso.\n";
+    } else {
+        echo "Erro na desassociação: " . mysqli_error($con) . "\n";
+    }
+}
+
+function listarReceitasPorCategoria($con) {
+    listarCategorias($con);
+    $idCategoria = (int)readline("Digite o ID da categoria para filtrar receitas: ");
+
+    $sql = "SELECT r.id, r.nome, r.descricao, r.tempo_preparacao, r.doses
+            FROM receitas r
+            JOIN receita_categoria rc ON r.id = rc.receita_id
+            WHERE rc.categoria_id = $idCategoria";
+
+    $res = mysqli_query($con, $sql);
+    if (mysqli_num_rows($res) === 0) {
+        echo "Nenhuma receita encontrada para essa categoria.\n";
+        return;
+    }
+
+    while ($r = mysqli_fetch_assoc($res)) {
+        echo "ID: {$r['id']}\n";
+        echo "Nome: {$r['nome']}\n";
+        echo "Descrição: {$r['descricao']}\n";
+        echo "Tempo: {$r['tempo_preparacao']} min\n";
+        echo "Doses: {$r['doses']}\n";
+    }
 }
 
 mysqli_close($con);
