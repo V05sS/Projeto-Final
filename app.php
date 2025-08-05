@@ -17,9 +17,9 @@ if ($con) {
 
 // Fase 4: Operações CRUD básicas para receitas em app.php.
 
-// Fase 5: Gestão de categorias e associação receita_categoria (pendente de avaliação do Guilherme).
+// Fase 5: Gestão de categorias e associação receita_categoria.
 
-// Fase 6: Gestão de ingredientes e composição das receitas (em processo).
+// Fase 6: Gestão de ingredientes e composição das receitas (pendente de avaliação do Guilherme).
 
 $fim = false;
 
@@ -34,6 +34,11 @@ while (!$fim) {
     echo "Associar receita a categoria -> 7\n";
     echo "Desassociar receita de categoria -> 8\n";
     echo "Listar receitas por categoria -> 9\n";
+    echo "Criar novo ingrediente -> 10\n";
+    echo "Listar ingredientes -> 11\n";
+    echo "Atualizar ingrediente de receita -> 12\n";
+    echo "Remover ingrediente de receita -> 13\n";
+    echo "Ver detalhes completos da receita -> 14\n";
     echo "Sair -> 0\n";
 
     $opcao = readline("Escolha uma opção: ");
@@ -65,6 +70,21 @@ while (!$fim) {
             break;
         case '9':
             listarReceitasPorCategoria($con);
+            break;
+        case '10':
+            criarIngrediente($con);
+            break;
+        case '11':
+            listarIngredientes($con);
+            break;
+        case '12':
+            atualizarIngredienteReceita($con);
+            break;
+        case '13':
+            removerIngredienteReceita($con);
+            break;
+        case '14':
+            detalhesCompletosReceita($con);
             break;
         case '0':
             $fim = true;
@@ -210,7 +230,7 @@ function apagarReceita($con) {
     echo "Receita excluída com sucesso.\n";
 }
 
-// Funções adicionais para categorias (fase 5)
+// Funções adicionais (fase 5)
 
 function criarCategoria($con) {
     $nome = readline("Nome da nova categoria: ");
@@ -305,6 +325,135 @@ function listarReceitasPorCategoria($con) {
         echo "Descrição: {$r['descricao']}\n";
         echo "Tempo: {$r['tempo_preparacao']} min\n";
         echo "Doses: {$r['doses']}\n";
+    }
+}
+
+// Funções adicionais (fase 6)
+
+function criarIngrediente($con) {
+    $nome = readline("Nome do ingrediente: ");
+    $sql = "INSERT INTO ingredientes (nome) VALUES ('$nome')";
+    if (mysqli_query($con, $sql)) {
+        echo "Ingrediente criado com sucesso.\n";
+    } else {
+        echo "Erro ao criar ingrediente: " . mysqli_error($con) . "\n";
+    }
+}
+
+function listarIngredientes($con) {
+    $res = mysqli_query($con, "SELECT * FROM ingredientes");
+    if (mysqli_num_rows($res) === 0) {
+        echo "Nenhum ingrediente encontrado.\n";
+        return;
+    }
+
+    echo "Ingredientes:\n";
+    while ($i = mysqli_fetch_assoc($res)) {
+        echo "{$i['id']} - {$i['nome']}\n";
+    }
+}
+
+function atualizarIngredienteReceita($con) {
+    $idReceita = (int)readline("ID da receita: ");
+    
+    $res = mysqli_query($con, "
+        SELECT i.id, i.nome, ri.quantidade, ri.unidade_medida
+        FROM receita_ingredientes ri
+        JOIN ingredientes i ON ri.ingrediente_id = i.id
+        WHERE ri.receita_id = $idReceita
+    ");
+
+    if (mysqli_num_rows($res) === 0) {
+        echo "Nenhum ingrediente encontrado para essa receita.\n";
+        return;
+    }
+
+    echo "Ingredientes associados:\n";
+    while ($i = mysqli_fetch_assoc($res)) {
+        echo "{$i['id']} - {$i['nome']} ({$i['quantidade']} {$i['unidade_medida']})\n";
+    }
+
+    $idIng = (int)readline("ID do ingrediente a atualizar: ");
+    $quantidade = readline("Nova quantidade: ");
+    $unidade = readline("Nova unidade (g/ml): ");
+
+    $sql = "UPDATE receita_ingredientes 
+            SET quantidade = '$quantidade', unidade_medida = '$unidade'
+            WHERE receita_id = $idReceita AND ingrediente_id = $idIng";
+    if (mysqli_query($con, $sql)) {
+        echo "Ingrediente atualizado com sucesso.\n";
+    } else {
+        echo "Erro ao atualizar: " . mysqli_error($con) . "\n";
+    }
+}
+
+function removerIngredienteReceita($con) {
+    $idReceita = (int)readline("ID da receita: ");
+    
+    $res = mysqli_query($con, "
+        SELECT i.id, i.nome FROM receita_ingredientes ri
+        JOIN ingredientes i ON ri.ingrediente_id = i.id
+        WHERE ri.receita_id = $idReceita
+    ");
+
+    if (mysqli_num_rows($res) === 0) {
+        echo "Nenhum ingrediente encontrado para essa receita.\n";
+        return;
+    }
+
+    echo "Ingredientes associados:\n";
+    while ($i = mysqli_fetch_assoc($res)) {
+        echo "{$i['id']} - {$i['nome']}\n";
+    }
+
+    $idIng = (int)readline("ID do ingrediente a remover: ");
+
+    $sql = "DELETE FROM receita_ingredientes 
+            WHERE receita_id = $idReceita AND ingrediente_id = $idIng";
+    if (mysqli_query($con, $sql)) {
+        echo "Ingrediente removido com sucesso.\n";
+    } else {
+        echo "Erro ao remover: " . mysqli_error($con) . "\n";
+    }
+}
+
+function detalhesCompletosReceita($con) {
+    $id = (int)readline("ID da receita: ");
+
+    $sql = "SELECT r.id, r.nome, r.descricao, r.tempo_preparacao, r.doses, c.nome AS categoria
+            FROM receitas r
+            LEFT JOIN receita_categoria rc ON r.id = rc.receita_id
+            LEFT JOIN categorias c ON rc.categoria_id = c.id
+            WHERE r.id = $id";
+
+    $res = mysqli_query($con, $sql);
+    if (mysqli_num_rows($res) === 0) {
+        echo "Receita não encontrada.\n";
+        return;
+    }
+
+    $r = mysqli_fetch_assoc($res);
+    echo "\n=== Detalhes da Receita ===\n";
+    echo "ID: {$r['id']}\n";
+    echo "Nome: {$r['nome']}\n";
+    echo "Descrição: {$r['descricao']}\n";
+    echo "Tempo: {$r['tempo_preparacao']} min\n";
+    echo "Doses: {$r['doses']}\n";
+    echo "Categoria: {$r['categoria']}\n";
+
+    echo "Ingredientes:\n";
+    $resIng = mysqli_query($con, "
+        SELECT i.nome, ri.quantidade, ri.unidade_medida
+        FROM receita_ingredientes ri
+        JOIN ingredientes i ON ri.ingrediente_id = i.id
+        WHERE ri.receita_id = $id
+    ");
+    if (mysqli_num_rows($resIng) === 0) {
+        echo "- Nenhum ingrediente associado.\n";
+    } else {
+        while ($i = mysqli_fetch_assoc($resIng)) {
+            echo "- {$i['nome']}: {$i['quantidade']} {$i['unidade_medida']}\n";
+        }
     }
 }
 
